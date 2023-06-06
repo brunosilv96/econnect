@@ -74,4 +74,150 @@ module.exports = class UserController {
 			res.status(500).json({ message: error });
 		}
 	}
+
+	static async login(req, res) {
+		console.log("Função: users/login");
+
+		const { email, password } = req.body;
+
+		if (!email) {
+			res.status(422).json({ message: "O email é obrigatório" });
+			return;
+		}
+
+		if (!password) {
+			res.status(422).json({ message: "A senha é obrigatória" });
+			return;
+		}
+
+		// Check if user exist
+		const user = await User.findOne({ email: email });
+
+		if (!user) {
+			res.status(422).json({ message: "Usuário não encontrado" });
+			return;
+		}
+
+		// Check if password match from password BD
+		const machtPass = await bcrypt.compare(password, user.password);
+
+		if (!machtPass) {
+			res.status(422).json({ message: "As senhas não condizem" });
+			return;
+		}
+
+		await createUserToken(user, req, res);
+	}
+
+	static async checkUser(req, res) {
+		console.log("Função: users/checkuser");
+
+		let correntUser;
+
+		if (req.headers.authorization) {
+			const token = getToken(req);
+			const decoded = jwt.verify(token, "econnectsecret");
+
+			correntUser = await User.findById(decoded.id);
+
+			correntUser.password = undefined;
+		} else {
+			correntUser = null;
+		}
+
+		res.status(200).send(correntUser);
+	}
+
+	static async getUserById(req, res) {
+		console.log("Função: users/getUserById");
+
+		const id = req.params.id;
+
+		const user = await User.findById(id).select("-password");
+
+		if (!user) {
+			res.status(422).json({ message: "Usuário não encontrado" });
+			return;
+		}
+
+		res.status(200).json({ user });
+	}
+
+	static async editUserById(req, res) {
+		console.log("Função: users/editUserById");
+
+		const id = req.params.id;
+
+		const token = getToken(req);
+		const user = await getUserByToken(token);
+
+		const { name, email, phone, password, confirmpassword } = req.body;
+		let { privileges } = req.body;
+
+		if (req.file) {
+			user.image = req.file.filename;
+		}
+
+		// Validadions
+		if (!name) {
+			res.status(422).json({ message: "O nome é obrigatório" });
+			return;
+		}
+
+		user.name = name;
+
+		if (!email) {
+			res.status(422).json({ message: "O e-mail é obrigatório" });
+			return;
+		}
+
+		// Check if email has already taken
+		const userExist = await User.findOne({ email: email });
+
+		if (user.email !== email && userExist) {
+			res.status(422).json({ message: "Ultilize um e-mail diferente" });
+			return;
+		}
+
+		user.email = email;
+
+		if (!phone) {
+			res.status(422).json({ message: "O telefone é obrigatório" });
+			return;
+		}
+
+		user.phone = phone;
+
+		if (!privileges) {
+			privileges = "User";
+		}
+
+		user.privileges = privileges;
+
+		if (password !== confirmpassword) {
+			res.status(422).json({ message: "As senhas não condizem" });
+			return;
+		} else if (password === confirmpassword && password != null) {
+			// Updating a password
+			const salt = await bcrypt.genSalt(12);
+			const passwordHash = await bcrypt.hash(password, salt);
+
+			user.password = passwordHash;
+		}
+
+		try {
+			// Return users updated data
+			await User.findOneAndUpdate(
+				{ _id: user.id },
+				{ $set: user },
+				{ new: true }
+			);
+
+			res.status(200).json({
+				message: "Usuário atualizado com sucesso!",
+			});
+		} catch (error) {
+			res.status(500).json({ message: error });
+		}
+	}
 };
