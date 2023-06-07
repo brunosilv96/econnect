@@ -2,6 +2,8 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+const ObjectId = require("mongoose").Types.ObjectId;
+
 // Import helpers
 const createUserToken = require("../helpers/create-user-token");
 const getToken = require("../helpers/get-token");
@@ -217,6 +219,84 @@ module.exports = class UserController {
 				message: "Usuário atualizado com sucesso!",
 			});
 		} catch (error) {
+			res.status(500).json({ message: error });
+		}
+	}
+
+	static async newAdress(req, res) {
+		console.log("Função: user/newAdress");
+
+		const id = req.params.id;
+		let { postalcode, adress, number, city, neighborhood } = req.body;
+
+		if (!ObjectId.isValid(id)) {
+			res.status(404).json({ message: "ID informado está inválido" });
+			return;
+		}
+
+		let user = await User.findOne({ _id: id }).select("-password");
+
+		if (!user) {
+			res.status(404).json({
+				message: "ID de usuário inválido ou não encontrado",
+			});
+			return;
+		}
+
+		if (!postalcode) {
+			res.status(422).json({
+				message: "O CEP é obrigatório (postalcode)",
+			});
+			return;
+		}
+		if (!adress) {
+			res.status(422).json({
+				message: "A rua é obrigatória (adress)",
+			});
+			return;
+		}
+		if (!number) {
+			res.status(422).json({
+				message: "O numero da residencia é obrigatório (number)",
+			});
+			return;
+		}
+		if (!city) {
+			res.status(422).json({
+				message: "A cidade é obrigatória (city)",
+			});
+			return;
+		}
+		if (!neighborhood) {
+			res.status(422).json({
+				message: "O bairro é obrigatório (neighborhood)",
+			});
+			return;
+		}
+
+		try {
+			const newAdress = {
+				postalcode,
+				adress,
+				number,
+				city,
+				neighborhood,
+			};
+
+			user.adress = newAdress;
+
+			await User.findOneAndUpdate(
+				{ _id: user._id.toString() },
+				{ $set: user },
+				{ new: true }
+			);
+
+			res.status(200).json({
+				message: "Endereço cadastrado com sucesso!",
+				user,
+			});
+		} catch (error) {
+			console.log(error);
 			res.status(500).json({ message: error });
 		}
 	}

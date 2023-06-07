@@ -28,6 +28,13 @@ const User = mongoose.model(
 				type: String,
 				required: true,
 			},
+			adress: {
+				postalcode: { type: String },
+				adress: { type: String },
+				number: { type: String },
+				city: { type: String },
+				neighborhood: { type: String },
+			},
 		},
 		{ timestamps: true }
 	)

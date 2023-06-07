@@ -20,4 +20,6 @@ router.patch(
 	UserController.editUserById
 );
 
+router.post("/newadress/:id", verifyToken, UserController.newAdress);
+
 module.exports = router;

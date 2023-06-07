@@ -1,17 +1,32 @@
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 // Destination to store the images
 const imageStorage = multer.diskStorage({
 	destination: function (req, file, cb) {
 		let folder = "";
 
+		if (!fs.existsSync(`public/images`)) {
+			fs.mkdirSync(`public/images`);
+			console.log("criou a images");
+		}
+
 		if (req.baseUrl.includes("users")) {
 			folder = "users";
+			if (!fs.existsSync(`public/images/${folder}`)) {
+				fs.mkdirSync(`public/images/${folder}`);
+			}
 		} else if (req.baseUrl.includes("products")) {
 			folder = "products";
+			if (!fs.existsSync(`public/images/${folder}`)) {
+				fs.mkdirSync(`public/images/${folder}`);
+			}
 		} else if (req.baseUrl.includes("category")) {
 			folder = "category";
+			if (!fs.existsSync(`public/images/${folder}`)) {
+				fs.mkdirSync(`public/images/${folder}`);
+			}
 		}
 
 		cb(null, `public/images/${folder}`);
