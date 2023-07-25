@@ -9,7 +9,6 @@ const imageStorage = multer.diskStorage({
 
 		if (!fs.existsSync(`public/images`)) {
 			fs.mkdirSync(`public/images`);
-			console.log("criou a images");
 		}
 
 		if (req.baseUrl.includes("users")) {
@@ -32,12 +31,7 @@ const imageStorage = multer.diskStorage({
 		cb(null, `public/images/${folder}`);
 	},
 	filename: function (req, file, cb) {
-		cb(
-			null,
-			Date.now() +
-				String(Math.floor(Math.random() * 1000)) +
-				path.extname(file.originalname)
-		);
+		cb(null, Date.now() + String(Math.floor(Math.random() * 1000)) + path.extname(file.originalname));
 	},
 });
 

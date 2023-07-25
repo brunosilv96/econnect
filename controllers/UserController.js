@@ -13,7 +13,7 @@ module.exports = class UserController {
 	static async register(req, res) {
 		console.log("Função: users/register");
 
-		const { name, email, phone, password, confirmpassword } = req.body;
+		const { name, email, phone, cpf, password, confirmpassword, adress } = req.body;
 		let { privileges } = req.body;
 
 		// Validations
@@ -27,6 +27,30 @@ module.exports = class UserController {
 		}
 		if (!phone) {
 			res.status(422).json({ message: "O telefone é obrigatório" });
+			return;
+		}
+		if (!cpf) {
+			res.status(422).json({ message: "O CPF é obrigatório" });
+			return;
+		}
+		if (!adress.postalcode) {
+			res.status(422).json({ message: "O CEP é obrigatório" });
+			return;
+		}
+		if (!adress.adressName) {
+			res.status(422).json({ message: "O endereço é obrigatório" });
+			return;
+		}
+		if (!adress.number) {
+			res.status(422).json({ message: "O número é obrigatório" });
+			return;
+		}
+		if (!adress.city) {
+			res.status(422).json({ message: "A cidade é obrigatória" });
+			return;
+		}
+		if (!adress.neighborhood) {
+			res.status(422).json({ message: "O bairro é obrigatório" });
 			return;
 		}
 		if (!password) {
@@ -62,10 +86,19 @@ module.exports = class UserController {
 		// Create a user
 		const user = new User({
 			name,
+			cpf,
 			email,
 			phone,
 			password: passwordHash,
 			privileges,
+			adress: {
+				postalcode,
+				adressName,
+				number,
+				city,
+				neighborhood,
+				complement,
+			},
 		});
 
 		try {
@@ -209,11 +242,7 @@ module.exports = class UserController {
 
 		try {
 			// Return users updated data
-			await User.findOneAndUpdate(
-				{ _id: user.id },
-				{ $set: user },
-				{ new: true }
-			);
+			await User.findOneAndUpdate({ _id: user.id }, { $set: user }, { new: true });
 
 			res.status(200).json({
 				message: "Usuário atualizado com sucesso!",
@@ -285,11 +314,7 @@ module.exports = class UserController {
 
 			user.adress = newAdress;
 
-			await User.findOneAndUpdate(
-				{ _id: user._id.toString() },
-				{ $set: user },
-				{ new: true }
-			);
+			await User.findOneAndUpdate({ _id: user._id.toString() }, { $set: user }, { new: true });
 
 			res.status(200).json({
 				message: "Endereço cadastrado com sucesso!",
