@@ -9,6 +9,10 @@ const User = mongoose.model(
 				type: String,
 				required: true,
 			},
+			cpf: {
+				type: String,
+				required: true,
+			},
 			email: {
 				type: String,
 				required: true,
@@ -30,10 +34,11 @@ const User = mongoose.model(
 			},
 			adress: {
 				postalcode: { type: String },
-				adress: { type: String },
+				adressName: { type: String },
 				number: { type: String },
 				city: { type: String },
 				neighborhood: { type: String },
+				complement: { type: String },
 			},
 		},
 		{ timestamps: true }
