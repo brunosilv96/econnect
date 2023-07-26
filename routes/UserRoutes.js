@@ -13,12 +13,7 @@ router.get("/checkuser", UserController.checkUser);
 router.get("/:id", UserController.getUserById);
 
 // Protected routers
-router.patch(
-	"/edit/:id",
-	verifyToken,
-	imageUpload.single("image"),
-	UserController.editUserById
-);
+router.patch("/edit/:id", verifyToken, imageUpload.single("image"), UserController.editUserById);
 
 router.post("/newadress/:id", verifyToken, UserController.newAdress);
 

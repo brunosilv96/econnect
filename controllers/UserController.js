@@ -13,7 +13,7 @@ module.exports = class UserController {
 	static async register(req, res) {
 		console.log("Função: users/register");
 
-		const { name, email, phone, cpf, password, confirmpassword, adress } = req.body;
+		const { name, email, phone, cpf, password, newPassword } = req.body;
 		let { privileges } = req.body;
 
 		// Validations
@@ -21,49 +21,29 @@ module.exports = class UserController {
 			res.status(422).json({ message: "O nome é obrigatório" });
 			return;
 		}
-		if (!email) {
-			res.status(422).json({ message: "O email é obrigatório" });
+		if (!cpf) {
+			res.status(422).json({ message: "O CPF é obrigatório" });
 			return;
 		}
 		if (!phone) {
 			res.status(422).json({ message: "O telefone é obrigatório" });
 			return;
 		}
-		if (!cpf) {
-			res.status(422).json({ message: "O CPF é obrigatório" });
-			return;
-		}
-		if (!adress.postalcode) {
-			res.status(422).json({ message: "O CEP é obrigatório" });
-			return;
-		}
-		if (!adress.adressName) {
-			res.status(422).json({ message: "O endereço é obrigatório" });
-			return;
-		}
-		if (!adress.number) {
-			res.status(422).json({ message: "O número é obrigatório" });
-			return;
-		}
-		if (!adress.city) {
-			res.status(422).json({ message: "A cidade é obrigatória" });
-			return;
-		}
-		if (!adress.neighborhood) {
-			res.status(422).json({ message: "O bairro é obrigatório" });
+		if (!email) {
+			res.status(422).json({ message: "O email é obrigatório" });
 			return;
 		}
 		if (!password) {
 			res.status(422).json({ message: "A senha é obrigatória" });
 			return;
 		}
-		if (!confirmpassword) {
+		if (!newPassword) {
 			res.status(422).json({
 				message: "A confirmação de senha é obrigatória",
 			});
 			return;
 		}
-		if (password !== confirmpassword) {
+		if (password !== newPassword) {
 			res.status(422).json({ message: "As senhas não condizem" });
 			return;
 		}
@@ -91,20 +71,66 @@ module.exports = class UserController {
 			phone,
 			password: passwordHash,
 			privileges,
-			adress: {
-				postalcode,
-				adressName,
-				number,
-				city,
-				neighborhood,
-				complement,
-			},
 		});
 
 		try {
 			const newUser = await user.save();
 
 			await createUserToken(newUser, req, res);
+		} catch (error) {
+			res.status(500).json({ message: error });
+		}
+	}
+
+	static async registerAdress(req, res) {
+		const { postalcode, adressName, number, city, neighborhood } = req.body;
+
+		if (!postalcode) {
+			res.status(422).json({ message: "O CEP é obrigatório" });
+			return;
+		}
+		if (!adressName) {
+			res.status(422).json({ message: "O endereço é obrigatório" });
+			return;
+		}
+		if (!number) {
+			res.status(422).json({ message: "O número é obrigatório" });
+			return;
+		}
+		if (!city) {
+			res.status(422).json({ message: "A cidade é obrigatória" });
+			return;
+		}
+		if (!neighborhood) {
+			res.status(422).json({ message: "O bairro é obrigatório" });
+			return;
+		}
+
+		// Search a owner
+		const token = getToken(req);
+		const user = await getUserByToken(token);
+
+		// Create a user
+		const adress = new User({
+			postalcode,
+			adressName,
+			number,
+			city,
+			neighborhood,
+			complement,
+			user: {
+				_id: user.id,
+				cpf: user.cpf,
+				name: user.name,
+				email: user.email,
+				phone: user.phone,
+			},
+		});
+
+		try {
+			const newUser = await adress.save();
+
+			// await createUserToken(newUser, req, res);
 		} catch (error) {
 			res.status(500).json({ message: error });
 		}
